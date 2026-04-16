@@ -1,0 +1,42 @@
+# Dependencies
+**/node_modules
+**/vendor
+**/__pycache__
+**/.pytest_cache
+**/*.pyc
+
+# Environment Files
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+
+# Docker
+.docker
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Laravel specific
+order-service/storage/*.key
+order-service/public/storage
+order-service/public/hot
+order-service/storage/framework/cache/data/*
+order-service/storage/framework/sessions/*
+order-service/storage/framework/testing/*
+order-service/storage/framework/views/*
+order-service/storage/logs/*.log
+order-service/.phpunit.result.cache
+
+# FastAPI/Python specific
+notification-service/venv/
+notification-service/.env
+notification-service/.ipynb_checkpoints/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo

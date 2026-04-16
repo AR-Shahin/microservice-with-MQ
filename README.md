@@ -1,37 +1,60 @@
-# Microservices Learning Ecosystem (Auth Edition)
+# Microservices Learning System (Hybrid Setup)
 
-This system now includes **Auth (Sanctum)** in the Order Service (Laravel).
+This project is now configured as a **Hybrid Architecture**:
+- **Laravel**: Running natively on your Mac.
+- **Express & FastAPI**: Dockerized.
+- **RabbitMQ**: Dockerized.
+- **MySQL**: Global Local MySQL (on your Mac).
 
-## 🚀 Services
-1. **Order Service (Laravel 11)**: Port 8000 (MySQL + Sanctum)
-2. **Inventory Service (Express.js)**: Port 3000 (MongoDB)
-3. **Notification Service (FastAPI)**: Port 8001 (PostgreSQL)
+## 🗄️ Database Setup
+Create three databases in your local MySQL:
+1. `ms_laravel`
+2. `ms_express`
+3. `ms_fastapi`
 
-## 🔐 Auth Workflow
-The Order Service handles user registration and login.
-- **Roles**: `user` and `admin`.
-- **Token**: Bearer token via Laravel Sanctum.
+## 🚀 How to Run
 
-## 🧪 Testing the New Flow
+### 1. Start Docker Services (MQ, Express, FastAPI)
+Run this in the root directory:
+```bash
+docker-compose up --build
+```
+*Wait for RabbitMQ and the services to start.*
 
-1. **Register a User**:
+### 2. Start Laravel Service (Order Service)
+Run these commands on your Mac:
+```bash
+cd order-service
+composer install
+php artisan migrate:fresh
+php artisan serve --port=8000
+```
+
+## 🧪 Testing the Pipeline
+
+1. **Register & Login** in Laravel:
    ```bash
    curl -X POST http://localhost:8000/api/register \
      -H "Content-Type: application/json" \
-     -d '{"name": "John Doe", "email": "john@example.com", "password": "password123", "role": "user"}'
+     -d '{"name": "Alice", "email": "alice@example.com", "password": "password", "role": "user"}'
    ```
-   *Copy the `access_token` from the response.*
-
-2. **Place an Order (Authenticated)**:
+2. **Place an Order** (Published to RabbitMQ):
    ```bash
    curl -X POST http://localhost:8000/api/orders \
-     -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+     -H "Authorization: Bearer YOUR_TOKEN" \
      -H "Content-Type: application/json" \
-     -d '{"product_id": 123, "quantity": 2}'
+     -d '{"product_id": 123, "quantity": 5}'
+   ```
+3. **Verify Inventory** (Express - MySQL):
+   ```bash
+   curl http://localhost:3000/inventory
+   ```
+4. **Verify Notifications** (FastAPI - MySQL):
+   ```bash
+   curl http://localhost:8001/logs
    ```
 
-3. **Admin Check**: Register as `admin` to see the role-based logic in `GET /api/orders`.
-
-## 📈 Evolution
-- The `OrderController` now automatically attaches the authenticated user's ID to the RabbitMQ message.
-- The Inventory and Notification services will receive the `user_id`, `user_email`, and `user_role` in the event payload.
+## 🔗 Connection Map
+- **Laravel (Host)** -> **DB (Host: 127.0.0.1)** & **MQ (Docker: 127.0.0.1:5672)**
+- **Express (Docker)** -> **DB (Host: host.docker.internal)** & **MQ (Docker: rabbitmq)**
+- **FastAPI (Docker)** -> **DB (Host: host.docker.internal)** & **MQ (Docker: rabbitmq)**

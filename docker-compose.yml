@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Message Broker (Kept in Docker for convenience, but can be local too)
+  # Message Broker
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -15,30 +15,17 @@ services:
       - microservices_net
 
   # Services
-  order-service:
-    build:
-      context: ./order-service
-      dockerfile: Dockerfile
-    container_name: order-service
-    volumes:
-      - ./order-service:/var/www/html
-    ports:
-      - "8000:8000"
-    depends_on:
-      - rabbitmq
-    networks:
-      - microservices_net
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
   inventory-service:
     build:
       context: ./inventory-service
       dockerfile: Dockerfile
     container_name: inventory-service
-    volumes:
-      - ./inventory-service:/app
-      - /app/node_modules
+    environment:
+      - DB_HOST=host.docker.internal
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - DB_NAME=ms_express
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672
     ports:
       - "3000:3000"
     depends_on:
@@ -53,8 +40,8 @@ services:
       context: ./notification-service
       dockerfile: Dockerfile
     container_name: notification-service
-    volumes:
-      - ./notification-service:/app
+    environment:
+      - DATABASE_URL=mysql+pymysql://root:root@host.docker.internal:3306/ms_fastapi
     ports:
       - "8001:8001"
     depends_on:

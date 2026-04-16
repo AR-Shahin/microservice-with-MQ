@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Message Broker
+  # Message Broker (Kept in Docker for convenience, but can be local too)
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -11,45 +11,6 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
-    networks:
-      - microservices_net
-
-  # Databases
-  mysql-db:
-    image: mysql:8.0
-    container_name: mysql-db
-    restart: always
-    environment:
-      MYSQL_DATABASE: order_db
-      MYSQL_ROOT_PASSWORD: root
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - microservices_net
-
-  mongodb:
-    image: mongo:latest
-    container_name: mongodb
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-    networks:
-      - microservices_net
-
-  postgres-db:
-    image: postgres:15
-    container_name: postgres-db
-    environment:
-      POSTGRES_DB: notification_db
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     networks:
       - microservices_net
 
@@ -64,10 +25,11 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - mysql-db
       - rabbitmq
     networks:
       - microservices_net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   inventory-service:
     build:
@@ -80,10 +42,11 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - mongodb
       - rabbitmq
     networks:
       - microservices_net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   notification-service:
     build:
@@ -95,16 +58,12 @@ services:
     ports:
       - "8001:8001"
     depends_on:
-      - postgres-db
       - rabbitmq
     networks:
       - microservices_net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
   microservices_net:
     driver: bridge
-
-volumes:
-  mysql_data:
-  mongo_data:
-  postgres_data:
